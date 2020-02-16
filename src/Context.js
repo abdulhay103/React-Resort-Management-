@@ -1,65 +1,55 @@
-import React, { Component } from 'react';
-import items from './data'
+import React, { createContext, useState, useEffect } from "react";
+import items from "./data";
 
-const RoomContext = React.createContext();
-// <RoomContext.Provider value= {'Hello'}
+const RoomContext = createContext();
+const RoomProvider = props => {
+  const [roomData, setRoomData] = useState({
+    rooms: [],
+    sortedRooms: [],
+    featuredRooms: [],
+    loading: true
+  });
 
-class RoomProvider extends Component {
-    state = {
-        rooms: [],
-        sortedRooms: [],
-        featuredRoom: [],
-        loading: true
-    };
+  // getData
+  useEffect(() => {
+    let rooms = formateData(items);
+    let featuredRooms = rooms.filter(room => room.featured === true);
+    // console.log(featuredRooms);
 
-    // getData
-    componentDidMount(){
-        // this.getData
-        let rooms = this.formatData(items);
-        let featuredRooms = rooms.filter( room => room.fields.featured === true);
-        // console.log(featuredRooms);
-        
-        this.setState({
-            rooms,
-            featuredRooms,
-            sortedRooms: rooms,
-            loading: false
-        }) 
-    }
+    setRoomData({
+      rooms,
+      sortedRooms: rooms,
+      featuredRooms,
+      loading: false
+    });
+  }, []);
 
-    formatData(items){
-        let tempItems = items.map(item =>{
-            let id = item.sys.id;
-            let images = item.fields.images.map(image =>image.fields.file.url);
-            let room = {...item, images, id};
-            return room;
-            
-        })
-        return tempItems
-    }
+  // Data Formate for Rooms State
+  const formateData = items => {
+    let tempsItemps = items.map(item => {
+      let id = item.sys.id;
+      let images = item.fields.images.map(image => image.fields.file.url);
+      let room = { ...item.fields, images, id };
+      return room;
+    });
+    return tempsItemps;
+  };
 
-    getRoom = (slug) => {
-        let tempRooms = [...this.state.rooms];
-        if (!tempRooms) {
-            
-        }else{
-            const rooms = tempRooms.find( room => room.slug !== slug );
-            return rooms;        
-        }
+  // Get Featured Rooms
+  const getFroom = slug => {
+    let tempFrooms = roomData.rooms && [...roomData.rooms];
+    const singleFroom = tempFrooms.find(
+      singleFroom => singleFroom.slug === slug
+    );
+    return singleFroom;
+  };
 
-
-        
-    }
-
-    render() {
-        
-        return (
-            <RoomContext.Provider value={{...this.state, getRoom:this.getRoom}}>
-                {this.props.children}
-            </RoomContext.Provider>
-        )
-    }
-}
+  return (
+    <RoomContext.Provider value={{ roomData, getFroom }}>
+      {props.children}
+    </RoomContext.Provider>
+  );
+};
 
 const RoomConsumer = RoomContext.Consumer;
 export { RoomContext, RoomProvider, RoomConsumer };
